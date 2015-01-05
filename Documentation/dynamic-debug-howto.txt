@@ -5,69 +5,60 @@
 Introduction
 ------------
 
-This document describes how to use the dynamic debug (dyndbg) feature.
+The dynamic debug system (CONFIG_DYNAMIC_DEBUG) allows debug statements,
+such as pr_debug() or dev_dbg(), to be dynamically enabled and disabled.
 
-Dynamic debug is designed to allow you to dynamically enable/disable
-kernel code to obtain additional kernel information.  Currently, if
-CONFIG_DYNAMIC_DEBUG is set, then all pr_debug()/dev_dbg() and
-print_hex_dump_debug()/print_hex_dump_bytes() calls can be dynamically
-enabled per-callsite.
+All interaction with the system is accomplished using a single control
+file.  To list all the available print statements simply cat the file as
+root.
 
-Dynamic debug has even more useful features:
+  ~# cat <debugfs>/dynamic_debug/control
+  # filename:lineno [module]function flags format
+  init/main.c:745 [main]initcall_blacklisted =_ "initcall %s blacklisted\012"
+  init/main.c:721 [main]initcall_blacklist =_ "blacklisting initcall %s\012"
+  init/initramfs.c:483 [initramfs]unpack_to_rootfs =_ "Detected %s compressed data\012"
+  ...
 
- * Simple query language allows turning on and off debugging
-   statements by matching any combination of 0 or 1 of:
+Notice that each line gives a filename, line number, module, function
+name, flags and format string of the print statement.  The flags in
+these examples are '=_' which will turn off debug output.
+
+To enable debug output for init/main.c on line 745 simply use the 'file'
+and 'line' directive with the '+p' flag.
+
+  ~# echo 'file init/main.c line 745 +p' > <debugfs>/dynamic_debug/control
+
+  ~# cat <debugfs>/dynamic_debug/control
+  # filename:lineno [module]function flags format
+  init/main.c:745 [main]initcall_blacklisted =p "initcall %s blacklisted\012"
+  init/main.c:721 [main]initcall_blacklist =_ "blacklisting initcall %s\012"
+  init/initramfs.c:483 [initramfs]unpack_to_rootfs =_ "Detected %s compressed data\012"
+  ...
+
+Notice that now the flag is '=p' which indicates that debug output is enabled
+for that statement while the others are still disabled.
+
+To enable all output for all statements in the 'initramfs' module use
+the 'module' command.
+
+  ~# echo 'module initramfs +p' > <debugfs>/dynamic_debug/control
+
+If there is a syntax error in the command it will respond with a
+non-zero return status.
+
+  ~# echo 'INVALID-COMMAND!' > <debugfs>/dynamic_debug/control
+  -bash: echo: write error: Invalid argument
+
+These few examples are just a sample of the query language provided by
+the dynamic debug system.  Queries can be constructed from any
+combination the following items, as will be discussed in the remainder
+of this document.
 
    - source filename
    - function name
    - line number (including ranges of line numbers)
    - module name
    - format string
-
- * Provides a debugfs control file: <debugfs>/dynamic_debug/control
-   which can be read to display the complete list of known debug
-   statements, to help guide you
-
-Controlling Dynamic Debug Behaviour
------------------------------------
-
-The behaviour of pr_debug()/dev_dbg()s are controlled via writing to a
-control file in the 'debugfs' filesystem. Thus, you must first mount
-the debugfs filesystem, in order to make use of this feature.
-Subsequently, we refer to the control file as:
-<debugfs>/dynamic_debug/control. For example, if you want to enable
-printing from source file 'svcsock.c', line 1603 you simply do:
-
-  ~# echo 'file svcsock.c line 1603 +p' > <debugfs>/dynamic_debug/control
-
-If you make a mistake with the syntax, the write will fail thus:
-
-  ~# echo 'file svcsock.c wtf 1 +p' > <debugfs>/dynamic_debug/control
-  -bash: echo: write error: Invalid argument
-
-Viewing Dynamic Debug Behaviour
--------------------------------
-
-You can view the currently configured behaviour of all the debug
-statements via:
-
-  ~# cat <debugfs>/dynamic_debug/control
-  # filename:lineno [module]function flags format
-  /usr/src/packages/BUILD/sgi-enhancednfs-1.4/default/net/sunrpc/svc_rdma.c:323 [svcxprt_rdma]svc_rdma_cleanup =_ "SVCRDMA Module Removed, deregister RPC RDMA transport\012"
-  /usr/src/packages/BUILD/sgi-enhancednfs-1.4/default/net/sunrpc/svc_rdma.c:341 [svcxprt_rdma]svc_rdma_init =_ "\011max_inline       : %d\012"
-  /usr/src/packages/BUILD/sgi-enhancednfs-1.4/default/net/sunrpc/svc_rdma.c:340 [svcxprt_rdma]svc_rdma_init =_ "\011sq_depth         : %d\012"
-  /usr/src/packages/BUILD/sgi-enhancednfs-1.4/default/net/sunrpc/svc_rdma.c:338 [svcxprt_rdma]svc_rdma_init =_ "\011max_requests     : %d\012"
-  ...
-
-The third column shows the currently enabled flags for each debug
-statement callsite (see below for definitions of the flags).  The
-default value, with no flags enabled, is "=_".  So you can view all
-the debug statement callsites with any non-default flags:
-
-  ~# awk '$3 != "=_"' <debugfs>/dynamic_debug/control
-  # filename:lineno [module]function flags format
-  /usr/src/packages/BUILD/sgi-enhancednfs-1.4/default/net/sunrpc/svcsock.c:1603 [sunrpc]svc_send p "svc_process: st_sendto returned %d\012"
-
 
 Command Language Reference
 --------------------------
