@@ -45,14 +45,12 @@ Subsequently, we refer to the control file as:
 <debugfs>/dynamic_debug/control. For example, if you want to enable
 printing from source file 'svcsock.c', line 1603 you simply do:
 
-nullarbor:~ # echo 'file svcsock.c line 1603 +p' >
-				<debugfs>/dynamic_debug/control
+  ~# echo 'file svcsock.c line 1603 +p' > <debugfs>/dynamic_debug/control
 
 If you make a mistake with the syntax, the write will fail thus:
 
-nullarbor:~ # echo 'file svcsock.c wtf 1 +p' >
-				<debugfs>/dynamic_debug/control
--bash: echo: write error: Invalid argument
+  ~# echo 'file svcsock.c wtf 1 +p' > <debugfs>/dynamic_debug/control
+  -bash: echo: write error: Invalid argument
 
 Viewing Dynamic Debug Behaviour
 -------------------------------
@@ -60,32 +58,32 @@ Viewing Dynamic Debug Behaviour
 You can view the currently configured behaviour of all the debug
 statements via:
 
-nullarbor:~ # cat <debugfs>/dynamic_debug/control
-# filename:lineno [module]function flags format
-/usr/src/packages/BUILD/sgi-enhancednfs-1.4/default/net/sunrpc/svc_rdma.c:323 [svcxprt_rdma]svc_rdma_cleanup =_ "SVCRDMA Module Removed, deregister RPC RDMA transport\012"
-/usr/src/packages/BUILD/sgi-enhancednfs-1.4/default/net/sunrpc/svc_rdma.c:341 [svcxprt_rdma]svc_rdma_init =_ "\011max_inline       : %d\012"
-/usr/src/packages/BUILD/sgi-enhancednfs-1.4/default/net/sunrpc/svc_rdma.c:340 [svcxprt_rdma]svc_rdma_init =_ "\011sq_depth         : %d\012"
-/usr/src/packages/BUILD/sgi-enhancednfs-1.4/default/net/sunrpc/svc_rdma.c:338 [svcxprt_rdma]svc_rdma_init =_ "\011max_requests     : %d\012"
-...
+  ~# cat <debugfs>/dynamic_debug/control
+  # filename:lineno [module]function flags format
+  /usr/src/packages/BUILD/sgi-enhancednfs-1.4/default/net/sunrpc/svc_rdma.c:323 [svcxprt_rdma]svc_rdma_cleanup =_ "SVCRDMA Module Removed, deregister RPC RDMA transport\012"
+  /usr/src/packages/BUILD/sgi-enhancednfs-1.4/default/net/sunrpc/svc_rdma.c:341 [svcxprt_rdma]svc_rdma_init =_ "\011max_inline       : %d\012"
+  /usr/src/packages/BUILD/sgi-enhancednfs-1.4/default/net/sunrpc/svc_rdma.c:340 [svcxprt_rdma]svc_rdma_init =_ "\011sq_depth         : %d\012"
+  /usr/src/packages/BUILD/sgi-enhancednfs-1.4/default/net/sunrpc/svc_rdma.c:338 [svcxprt_rdma]svc_rdma_init =_ "\011max_requests     : %d\012"
+  ...
 
 
 You can also apply standard Unix text manipulation filters to this
 data, e.g.
 
-nullarbor:~ # grep -i rdma <debugfs>/dynamic_debug/control  | wc -l
-62
+  ~# grep -i rdma <debugfs>/dynamic_debug/control  | wc -l
+  62
 
-nullarbor:~ # grep -i tcp <debugfs>/dynamic_debug/control | wc -l
-42
+  ~# grep -i tcp <debugfs>/dynamic_debug/control | wc -l
+  42
 
 The third column shows the currently enabled flags for each debug
 statement callsite (see below for definitions of the flags).  The
 default value, with no flags enabled, is "=_".  So you can view all
 the debug statement callsites with any non-default flags:
 
-nullarbor:~ # awk '$3 != "=_"' <debugfs>/dynamic_debug/control
-# filename:lineno [module]function flags format
-/usr/src/packages/BUILD/sgi-enhancednfs-1.4/default/net/sunrpc/svcsock.c:1603 [sunrpc]svc_send p "svc_process: st_sendto returned %d\012"
+  ~# awk '$3 != "=_"' <debugfs>/dynamic_debug/control
+  # filename:lineno [module]function flags format
+  /usr/src/packages/BUILD/sgi-enhancednfs-1.4/default/net/sunrpc/svcsock.c:1603 [sunrpc]svc_send p "svc_process: st_sendto returned %d\012"
 
 
 Command Language Reference
@@ -94,12 +92,9 @@ Command Language Reference
 At the lexical level, a command comprises a sequence of words separated
 by spaces or tabs.  So these are all equivalent:
 
-nullarbor:~ # echo -c 'file svcsock.c line 1603 +p' >
-				<debugfs>/dynamic_debug/control
-nullarbor:~ # echo -c '  file   svcsock.c     line  1603 +p  ' >
-				<debugfs>/dynamic_debug/control
-nullarbor:~ # echo -n 'file svcsock.c line 1603 +p' >
-				<debugfs>/dynamic_debug/control
+  ~# echo -c 'file svcsock.c line 1603 +p' > <debugfs>/dynamic_debug/control
+  ~# echo -c '  file   svcsock.c     line  1603 +p  ' > <debugfs>/dynamic_debug/control
+  ~# echo -n 'file svcsock.c line 1603 +p' > <debugfs>/dynamic_debug/control
 
 Command submissions are bounded by a write() system call.
 Multiple commands can be written together, separated by ';' or '\n'.
@@ -132,17 +127,19 @@ attribute of the callsite to be compared, and a value to compare
 against.  Possible keywords are:
 
 match-spec ::= 'func' string |
-	       'file' string |
-	       'module' string |
-	       'format' string |
-	       'line' line-range
+               'file' string |
+               'module' string |
+               'format' string |
+               'line' line-range
 
 line-range ::= lineno |
-	       '-'lineno |
-	       lineno'-' |
-	       lineno'-'lineno
-// Note: line-range cannot contain any spaces,
-// e.g. "1-30" is valid range but "1 - 30" is not.
+               '-'lineno |
+               lineno'-' |
+               lineno'-'lineno
+/*
+ * Note: line-range cannot contain any spaces,
+ * e.g. "1-30" is valid range but "1 - 30" is not.
+ */
 
 lineno ::= unsigned-int
 
@@ -150,14 +147,14 @@ The meanings of each keyword are:
 
 func
     The given string is compared against the function name
-    of each callsite.  Example:
+    of each callsite.
 
     func svc_tcp_accept
 
 file
     The given string is compared against either the full pathname, the
     src-root relative pathname, or the basename of the source file of
-    each callsite.  Examples:
+    each callsite.
 
     file svcsock.c
     file kernel/freezer.c
@@ -167,7 +164,7 @@ module
     The given string is compared against the module name
     of each callsite.  The module name is the string as
     seen in "lsmod", i.e. without the directory or the .ko
-    suffix and with '-' changed to '_'.  Examples:
+    suffix and with '-' changed to '_'.
 
     module sunrpc
     module nfsd
@@ -180,13 +177,12 @@ format
     escape \ooo notation, e.g. the space character is \040.
     Alternatively, the string can be enclosed in double quote
     characters (") or single quote characters (').
-    Examples:
 
-    format svcrdma:	    // many of the NFS/RDMA server pr_debugs
-    format readahead	    // some pr_debugs in the readahead cache
-    format nfsd:\040SETATTR // one way to match a format with whitespace
-    format "nfsd: SETATTR"  // a neater way to match a format with whitespace
-    format 'nfsd: SETATTR'  // yet another way to match a format with whitespace
+    format svcrdma:         /* many of the NFS/RDMA server pr_debugs */
+    format readahead        /* some pr_debugs in the readahead cache */
+    format nfsd:\040SETATTR /* one way to match a format with whitespace */
+    format "nfsd: SETATTR"  /* a neater way to match a format with whitespace */
+    format 'nfsd: SETATTR'  /* another way to match a format with whitespace */
 
 line
     The given line number or range of line numbers is compared
@@ -195,12 +191,12 @@ line
     range of line numbers matches any callsite between the first
     and last line number inclusive.  An empty first number means
     the first line in the file, an empty line number means the
-    last number in the file.  Examples:
+    last number in the file.
 
-    line 1603	    // exactly line 1603
-    line 1600-1605  // the six lines from line 1600 to line 1605
-    line -1605	    // the 1605 lines from line 1 to line 1605
-    line 1600-	    // all lines from line 1600 to the end of the file
+    line 1603       /* exactly line 1603 */
+    line 1600-1605  /* the six lines from line 1600 to line 1605 */
+    line -1605      /* the 1605 lines from line 1 to line 1605 */
+    line 1600-      /* all lines from line 1600 to the end of the file */
 
 The flag specification comprises a change operation followed
 by one or more flag characters.  The change operation is one
@@ -300,44 +296,38 @@ the sysfs interface if the debug messages are no longer needed:
 Examples
 --------
 
-// enable the message at line 1603 of file svcsock.c
-nullarbor:~ # echo -n 'file svcsock.c line 1603 +p' >
-				<debugfs>/dynamic_debug/control
+  /* enable the message at line 1603 of file svcsock.c */
+  ~# echo 'file svcsock.c line 1603 +p' > <debugfs>/dynamic_debug/control
 
-// enable all the messages in file svcsock.c
-nullarbor:~ # echo -n 'file svcsock.c +p' >
-				<debugfs>/dynamic_debug/control
+  /* enable all the messages in file svcsock.c */
+  ~# echo 'file svcsock.c +p' > <debugfs>/dynamic_debug/control
 
-// enable all the messages in the NFS server module
-nullarbor:~ # echo -n 'module nfsd +p' >
-				<debugfs>/dynamic_debug/control
+  /* enable all the messages in the NFS server module */
+  ~# echo 'module nfsd +p' > <debugfs>/dynamic_debug/control
 
-// enable all 12 messages in the function svc_process()
-nullarbor:~ # echo -n 'func svc_process +p' >
-				<debugfs>/dynamic_debug/control
+  /* enable all 12 messages in the function svc_process() */
+  ~# echo 'func svc_process +p' > <debugfs>/dynamic_debug/control
 
-// disable all 12 messages in the function svc_process()
-nullarbor:~ # echo -n 'func svc_process -p' >
-				<debugfs>/dynamic_debug/control
+  /* disable all 12 messages in the function svc_process() */
+  ~# echo 'func svc_process -p' > <debugfs>/dynamic_debug/control
 
-// enable messages for NFS calls READ, READLINK, READDIR and READDIR+.
-nullarbor:~ # echo -n 'format "nfsd: READ" +p' >
-				<debugfs>/dynamic_debug/control
+  /* enable messages for NFS calls READ, READLINK, READDIR and READDIR+. */
+  ~# echo 'format "nfsd: READ" +p' > <debugfs>/dynamic_debug/control
 
-// enable messages in files of which the paths include string "usb"
-nullarbor:~ # echo -n '*usb* +p' > <debugfs>/dynamic_debug/control
+  /* enable messages in files of which the paths include string "usb" */
+  ~# echo '*usb* +p' > <debugfs>/dynamic_debug/control
 
-// enable all messages
-nullarbor:~ # echo -n '+p' > <debugfs>/dynamic_debug/control
+  /* enable all messages */
+  ~# echo '+p' > <debugfs>/dynamic_debug/control
 
-// add module, function to all enabled messages
-nullarbor:~ # echo -n '+mf' > <debugfs>/dynamic_debug/control
+  /* add module, function to all enabled messages */
+  ~# echo '+mf' > <debugfs>/dynamic_debug/control
 
-// boot-args example, with newlines and comments for readability
-Kernel command line: ...
-  // see whats going on in dyndbg=value processing
-  dynamic_debug.verbose=1
-  // enable pr_debugs in 2 builtins, #cmt is stripped
-  dyndbg="module params +p #cmt ; module sys +p"
-  // enable pr_debugs in 2 functions in a module loaded later
-  pc87360.dyndbg="func pc87360_init_device +p; func pc87360_find +p"
+  /* boot-args example, with newlines and comments for readability */
+  Kernel command line: ...
+    /* see whats going on in dyndbg=value processing */
+    dynamic_debug.verbose=1
+    /* enable pr_debugs in 2 builtins, #cmt is stripped */
+    dyndbg="module params +p #cmt ; module sys +p"
+    /* enable pr_debugs in 2 functions in a module loaded later */
+    pc87360.dyndbg="func pc87360_init_device +p; func pc87360_find +p"
