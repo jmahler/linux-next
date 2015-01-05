@@ -66,16 +66,6 @@ statements via:
   /usr/src/packages/BUILD/sgi-enhancednfs-1.4/default/net/sunrpc/svc_rdma.c:338 [svcxprt_rdma]svc_rdma_init =_ "\011max_requests     : %d\012"
   ...
 
-
-You can also apply standard Unix text manipulation filters to this
-data, e.g.
-
-  ~# grep -i rdma <debugfs>/dynamic_debug/control  | wc -l
-  62
-
-  ~# grep -i tcp <debugfs>/dynamic_debug/control | wc -l
-  42
-
 The third column shows the currently enabled flags for each debug
 statement callsite (see below for definitions of the flags).  The
 default value, with no flags enabled, is "=_".  So you can view all
